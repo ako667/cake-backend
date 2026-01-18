@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Cake Shop</title>
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #ffd6e8, #fff0f6);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 50px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #e91e63;
+        }
+
+        h2 {
+            color: #ad1457;
+            margin-top: 30px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 10px;
+            border: 1px solid #f8bbd0;
+        }
+
+        button {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            margin-left: 5px;
+        }
+
+        .add-btn {
+            width: 100%;
+            margin-top: 10px;
+            background: #e91e63;
+            color: white;
+            font-size: 16px;
+        }
+
+        .add-btn:hover {
+            background: #c2185b;
+        }
+
+        .edit-btn {
+            background: #f8bbd0;
+            color: #880e4f;
+        }
+
+        .delete-btn {
+            background: #ef5350;
+            color: white;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        li {
+            background: #fff0f6;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .cake-info {
+            max-width: 70%;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #ad1457;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🍰 Cake Shop</h1>
+
+    <h2>Add a Cake</h2>
+    <input type="text" id="name" placeholder="Cake Name">
+    <input type="number" id="price" placeholder="Price">
+    <input type="text" id="description" placeholder="Description">
+    <button class="add-btn" onclick="addCake()">Add Cake</button>
+
+    <h2>Available Cakes</h2>
+    <ul id="cakeList"></ul>
+
+    <footer>Cake Ordering System © 2026</footer>
+</div>
+
+<script>
+    async function fetchCakes() {
+        const res = await fetch('/api/cakes');
+        const cakes = await res.json();
+        const list = document.getElementById('cakeList');
+        list.innerHTML = '';
+
+        cakes.forEach(cake => {
+            const li = document.createElement('li');
+
+            // Форматируем цену в тенге с разделителем тысяч
+            const priceFormatted = Number(cake.price).toLocaleString('kk-KZ');
+
+            li.innerHTML = `
+                <div class="cake-info">
+                    <strong>${cake.name}</strong><br>
+                    ${priceFormatted} ₸ — ${cake.description}
+                </div>
+                <div>
+                    <button class="edit-btn" onclick="editCake('${cake._id}')">✏️ Edit</button>
+                    <button class="delete-btn" onclick="deleteCake('${cake._id}')">❌ Delete</button>
+                </div>
+            `;
+
+            list.appendChild(li);
+        });
+    }
+
+    async function addCake() {
+        const name = document.getElementById('name').value;
+        const price = document.getElementById('price').value;
+        const description = document.getElementById('description').value;
+
+        if (!name || !price || !description) {
+            alert('Please fill all fields');
+            return;
+        }
+
+        await fetch('/api/cakes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, price, description })
+        });
+
+        document.getElementById('name').value = '';
+        document.getElementById('price').value = '';
+        document.getElementById('description').value = '';
+
+        fetchCakes();
+    }
+
+    async function deleteCake(id) {
+        if (!confirm('Delete this cake?')) return;
+
+        await fetch(`/api/cakes/${id}`, {
+            method: 'DELETE'
+        });
+
+        fetchCakes();
+    }
+
+    async function editCake(id) {
+        const name = prompt('New cake name:');
+        const price = prompt('New price:');
+        const description = prompt('New description:');
+
+        if (!name || !price || !description) {
+            alert('All fields are required');
+            return;
+        }
+
+        await fetch(`/api/cakes/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, price, description })
+        });
+
+        fetchCakes();
+    }
+
+    fetchCakes();
+</script>
+
+</body>
+</html>
